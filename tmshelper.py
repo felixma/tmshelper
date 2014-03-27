@@ -14,14 +14,15 @@ pload = ''
 RCR = ''
 featureName = ''
 
-def usage():
-    print 'tmshelper usage:'
-    print '-h, --help: print help message.'
-    print '-i: Test plan excel file.'
-    print '-a: Generate all (schedule, plan, script)'
-    print '-s: Generate schedule only'
-    print '-p: Generate plan only'
-    print '-t: Generate script only'
+
+#def usage():
+#    print 'tmshelper usage:'
+#    print '-h, --help: print help message.'
+#    print '-i: Test plan excel file.'
+#    print '-a: Generate all (schedule, plan, script)'
+#    print '-s: Generate schedule only'
+#    print '-p: Generate plan only'
+#    print '-t: Generate script only'
 
 def getinfo(testplan):
     with xlrd.open_workbook(testplan) as all:
@@ -153,13 +154,32 @@ def script(testplan):
 
 def main(argv):
     parser = optparse.OptionParser()
-    parser.add_option('-i', action = 'store', dest = 'testplan')
+    parser.add_option('-i', action = 'store', dest = 'testplan', help = 'test plan excel file')
+    parser.add_option('-a', action = 'store_true', dest = 'all', help = 'generate all (schedule, plan, script)')
+    parser.add_option('-s', action = 'store_true', dest = 'schedOnly', help = 'generate schedule only')
+    parser.add_option('-p', action = 'store_true', dest = 'planOnly', help = 'generate plan only')
+    parser.add_option('-t', action = 'store_true', dest = 'scriptOnly', help = 'generate script only')
     opt, arg = parser.parse_args(argv)
+    
+    testplan = opt.testplan
+    getinfo(testplan)
 
-    getinfo(opt.testplan)
-    schedule()
-    plan(opt.testplan)
-    script(opt.testplan)
+    #if opt.all or (opt.all is None and opt.schedOnly is None and opt.planOnly is None and opt.scriptOnly is None):
+    if opt.all or not (opt.all or  opt.schedOnly or opt.planOnly or opt.scriptOnly):
+        #print 'creating all'
+        schedule()
+        plan(testplan)
+        script(testplan)
+        sys.exit(0)
+    if opt.schedOnly:
+        #print 'creating schedule only'
+        schedule()
+    if opt.planOnly:
+        #print 'creating plan only'
+        plan(testplan)
+    if opt.scriptOnly:
+        #print 'creating script only'
+        script(testplan)
 
 if __name__ == '__main__':
     main(sys.argv[1:])
