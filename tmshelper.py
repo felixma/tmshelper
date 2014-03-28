@@ -1,5 +1,13 @@
 #!/usr/bin/env python
 
+"""tmshelper is a tool to extract information from MS excel file into TMS staff.
+
+History:
+
+3/28/2014 - version 0.1
+"""
+__authors__ = ['"Felix Ma" <felix.ma@alcatel-lucent.com>']
+
 import os,shutil,re,sys,optparse
 import xlrd
 
@@ -25,6 +33,14 @@ featureName = ''
 #    print '-t: Generate script only'
 
 def getinfo(testplan):
+    """Extract general information (e.g., setname, grp) from MS excel file, initialize global parameters.
+
+    Args:
+        testplan: Prepared MS excel file name
+
+    Raises:
+        IOError: When testplan doesn't exist.
+    """
     with xlrd.open_workbook(testplan) as all:
         info = all.sheet_by_name(u'Info')
         global setname, grp,begindate, enddate, totalCaseNum, originator, rload, pload, RCR, featureName
@@ -40,6 +56,14 @@ def getinfo(testplan):
         featureName = info.cell(9,1).value
 
 def schedule():
+    """Generate TMS schedule file.
+
+    Args:
+        None.
+
+    Output:
+        sched_grp (grp is defined in MS excel file.)
+    """
     with open('sched_%s' % grp, 'w') as sched:
         sched.write('setname = %s\n' % setname)
         sched.write('apple = IMS\n')
@@ -54,6 +78,17 @@ def schedule():
         sched.write('pcomment =\n')
 
 def plan(testplan):
+    """Generate TMS test plan file.
+
+    Args:
+        testplan: Prepared MS excel file name
+
+    Raises:
+        IOError: When testplan doesn't exist.
+
+    Output:
+        plan_grp (grp is defined in MS excel file.)
+    """
     with xlrd.open_workbook(testplan) as all:
         su = all.sheet_by_name(u'SU')
         regression = all.sheet_by_name(u'Regression')
@@ -84,6 +119,18 @@ def plan(testplan):
                 plan.write('\n')
 
 def script(testplan):
+    """Generate TMS test script file.
+
+    Args:
+        testplan: Prepared MS excel file name
+
+    Raises:
+        IOError: When testplan doesn't exist.
+        AttributeError: When regular expression search fails.
+
+    Output:
+        script_grp/script_files (grp is defined in MS excel file.)
+    """
     with xlrd.open_workbook(testplan) as all:
         scriptDirName = 'script_%s' % grp
         if os.path.exists(scriptDirName):
@@ -153,6 +200,14 @@ def script(testplan):
 
 
 def main(argv):
+    """Parse command line arguments.
+
+    Args:
+        Command line arguments.
+
+    Raise:
+        TypeError: When no additional command line argument.
+    """
     parser = optparse.OptionParser()
     parser.add_option('-i', action = 'store', dest = 'testplan', help = 'test plan excel file')
     parser.add_option('-a', action = 'store_true', dest = 'all', help = 'generate all (schedule, plan, script)')
