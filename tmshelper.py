@@ -8,7 +8,11 @@ History:
 """
 __authors__ = ['"Felix Ma" <felix.ma@alcatel-lucent.com>']
 
-import os,shutil,re,sys,optparse
+import os
+import sys
+import shutil
+import re
+import optparse
 import xlrd
 
 setname = ''
@@ -19,7 +23,7 @@ totalCaseNum = ''
 originator = ''
 rload = ''
 pload = ''
-RCR = ''
+rcr = ''
 featureName = ''
 
 
@@ -43,7 +47,7 @@ def getinfo(testplan):
     """
     with xlrd.open_workbook(testplan) as all:
         info = all.sheet_by_name(u'Info')
-        global setname, grp,begindate, enddate, totalCaseNum, originator, rload, pload, RCR, featureName
+        global setname, grp,begindate, enddate, totalCaseNum, originator, rload, pload, rcr, featureName
         setname = info.cell(0,1).value
         grp = info.cell(1,1).value
         begindate = info.cell(2,1).value
@@ -52,7 +56,7 @@ def getinfo(testplan):
         originator = info.cell(5,1).value
         rload = info.cell(6,1).value
         pload = info.cell(7,1).value
-        RCR = info.cell(8,1).value
+        rcr = info.cell(8,1).value
         featureName = info.cell(9,1).value
 
 def schedule():
@@ -163,7 +167,7 @@ def script(testplan):
                             scr.write('Requirement(s): Implicit\n')
                             scr.write('Feature(s): Implicit\n')
                         else:
-                            scr.write('Requirement(s): RCR%s\n' % RCR)
+                            scr.write('Requirement(s): RCR %s\n' % rcr)
                             scr.write('Feature(s): %s\n' % featureName) 
                         scr.write('Reference(s):\n')
                         scr.write('Functional Area(s): 90\n')
@@ -180,17 +184,19 @@ def script(testplan):
                         scr.write('Resources/Configuration:\nnone\n\n')
                         
                         scr.write('Initial Conditions/System Setup:\n')
-                        reg_config = r'Initial Configuration:([\w\s\-\.\#\*"\'\?\\:/]*)Test Procedure'
+                        reg_config = r'Initial Configuration:([\w\s\-\.\#\*"\'\?\\:/>~\+,\|()]*)Test Procedure'
                         configstr = re.search(reg_config, s[i])
                         if configstr is not None:
                             config = configstr.group(1).strip()
                             scr.write('%s\n' % config)
 
-                        reg_procedure = r'Test Procedure:([\w\s\-\.\#\*"\'\?\\:/]*)Verify'
+                        reg_procedure = r'Test Procedure:([\w\s\-\.\#\*"\'\?\\:/>~\+,\|()]*)Verify'
+                        #import pdb
+                        #pdb.set_trace()
                         procedure = re.search(reg_procedure, s[i]).group(1).strip()
                         scr.write('Test Procedure:\n%s\n\n' % procedure)
 
-                        reg_verify = r'Verify:([\w\s\-\.\#\*"\'\?\\:/]*)'
+                        reg_verify = r'Verify:([\w\s\-\.\#\*"\'\?\\:/>~\+,\|()]*)'
                         verifystr = re.search(reg_verify, s[i])
                         if verifystr:
                             scr.write('Verify:\n%s\n' % verifystr.group(1).strip())
