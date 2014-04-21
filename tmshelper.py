@@ -4,7 +4,8 @@
 
 History:
 
-3/28/2014 - version 0.1
+3/28/2014 - Version 0.1
+4/21/2014 - Add some special characters in regular expression
 """
 __authors__ = ['"Felix Ma" <felix.ma@alcatel-lucent.com>']
 
@@ -156,7 +157,7 @@ def script(testplan):
                     with open('%s.s' % t[i], 'w') as scr:
                         scr.write('Test I.D.: %s\n' % t[i])
                         
-                        reg_title = r'Title:([\w\s\-]*)Initial'
+                        reg_title = r'Title:([\w\s\-\']*)Initial'
                         title = re.search(reg_title, s[i]).group(1).strip()
                         scr.write('Title: %s\n' % title)
 
