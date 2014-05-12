@@ -6,6 +6,8 @@ History:
 
 3/28/2014 - Version 0.1
 4/21/2014 - Add some special characters in regular expression
+5/12/2012 - Add exception to handle "AttributeError: 'NoneType'" in re.search()
+          - Add "()&" in regular expression
 """
 __authors__ = ['"Felix Ma" <felix.ma@alcatel-lucent.com>']
 
@@ -71,7 +73,7 @@ def schedule():
     """
     with open('sched_%s' % grp, 'w') as sched:
         sched.write('setname = %s\n' % setname)
-        sched.write('apple = IMS\n')
+        sched.write('appl = IMS\n')
         sched.write('grp = %s\n' % grp)
         sched.write('phase = a\n')
         sched.write('testorg =\n')
@@ -80,7 +82,7 @@ def schedule():
         sched.write('enddate = %s\n' % enddate)
         sched.write('planwritten = %s\n' % totalCaseNum)
         sched.write('planrun = %s\n' % totalCaseNum)
-        sched.write('pcomment =\n')
+        sched.write('scomment =\n')
 
 def plan(testplan):
     """Generate TMS test plan file.
@@ -120,7 +122,7 @@ def plan(testplan):
                 plan.write('plancase = \n')
                 plan.write('pconfig = p1\n')
                 plan.write('pparams = \n')
-                plan.write('pcomment = \n')
+                plan.write('scomment = \n')
                 plan.write('\n')
 
 def script(testplan):
@@ -154,55 +156,73 @@ def script(testplan):
                 t.pop(0)
                 s.pop(0)
                 for i in range(len(t)):
-                    with open('%s.s' % t[i], 'w') as scr:
-                        scr.write('Test I.D.: %s\n' % t[i])
+                    if s[i]:
+                        with open('%s.s' % t[i], 'w') as scr:
+                            scr.write('Test I.D.: %s\n' % t[i])
+                            
+                            try:
+                                #reg_title = r'Title:([\w\s\-\']*)Initial'
+                                reg_title = r'Title:([\w\s\-\.\#\*"\'\?\\:/>~\+,\|()&"]*)Initial'
+                                title = re.search(reg_title, s[i]).group(1).strip()
+                                scr.write('Title: %s\n' % title)
+                            except AttributeError, err:
+                                print "Tid: %s: re.search() error in 'Title': " % t[i] + str(err)
+                                pass
+    
+                            scr.write('Owner: C.YU\n')
+                            scr.write('Originator: %s\n' % originator)
+                            scr.write('Script Status: I\n')
+                            if table is not feat:
+                                scr.write('Requirement(s): Implicit\n')
+                                scr.write('Feature(s): Implicit\n')
+                            else:
+                                scr.write('Requirement(s): RCR %s\n' % rcr)
+                                scr.write('Feature(s): %s\n' % featureName) 
+                            scr.write('Reference(s):\n')
+                            scr.write('Functional Area(s): 90\n')
+                            scr.write('Test Level: G\n')
+                            scr.write('Original Target Application(s): IMS\n')
+                            scr.write('Parent Test(s):\n')
+                            scr.write('Execution Mode: MAN\n')
+                            scr.write('Estimated Execution Time: 30\n')
+                            scr.write('\n')
+                            scr.write('Description:\n')
+                            scr.write('%s\n' % title)
+                            scr.write('\n')
+                            scr.write('Issue Notes:\nnone\n\n')
+                            scr.write('Resources/Configuration:\nnone\n\n')
                         
-                        reg_title = r'Title:([\w\s\-\']*)Initial'
-                        title = re.search(reg_title, s[i]).group(1).strip()
-                        scr.write('Title: %s\n' % title)
+                            scr.write('Initial Conditions/System Setup:\n')
+                            reg_config = r'Initial Configuration:([\w\s\-\.\#\*"\'\?\\:/>~\+,\|()&]*)Test Procedure'
+                            configstr = re.search(reg_config, s[i])
+                            if configstr is not None:
+                                try:
+                                    config = configstr.group(1).strip()
+                                    scr.write('%s\n' % config)
+                                except AttributeError, err:
+                                    print "Tid: %s: re.search() error in 'Initial Conditions': " % t[i] + str(err)
+                                    pass
 
-                        scr.write('Owner: C.YU\n')
-                        scr.write('Originator: %s\n' % originator)
-                        scr.write('Script Status: I\n')
-                        if table is not feat:
-                            scr.write('Requirement(s): Implicit\n')
-                            scr.write('Feature(s): Implicit\n')
-                        else:
-                            scr.write('Requirement(s): RCR %s\n' % rcr)
-                            scr.write('Feature(s): %s\n' % featureName) 
-                        scr.write('Reference(s):\n')
-                        scr.write('Functional Area(s): 90\n')
-                        scr.write('Test Level: G\n')
-                        scr.write('Original Target Application(s): IMS\n')
-                        scr.write('Parent Test(s):\n')
-                        scr.write('Execution Mode: MAN\n')
-                        scr.write('Estimated Execution Time: 30\n')
-                        scr.write('\n')
-                        scr.write('Description:\n')
-                        scr.write('%s\n' % title)
-                        scr.write('\n')
-                        scr.write('Issue Notes:\nnone\n\n')
-                        scr.write('Resources/Configuration:\nnone\n\n')
-                        
-                        scr.write('Initial Conditions/System Setup:\n')
-                        reg_config = r'Initial Configuration:([\w\s\-\.\#\*"\'\?\\:/>~\+,\|()]*)Test Procedure'
-                        configstr = re.search(reg_config, s[i])
-                        if configstr is not None:
-                            config = configstr.group(1).strip()
-                            scr.write('%s\n' % config)
+                            reg_procedure = r'Test Procedure:([\w\s\-\.\#\*"\'\?\\:/>~\+,\|()&]*)Verify'
+                            #import pdb
+                            #pdb.set_trace()
+                            try:
+                                procedure = re.search(reg_procedure, s[i]).group(1).strip()
+                                scr.write('Test Procedure:\n%s\n\n' % procedure)
+                            except AttributeError, err:
+                                print "Tid: %s: re.search() error in 'Test Procedure': " % t[i] + str(err)
+                                pass
 
-                        reg_procedure = r'Test Procedure:([\w\s\-\.\#\*"\'\?\\:/>~\+,\|()]*)Verify'
-                        #import pdb
-                        #pdb.set_trace()
-                        procedure = re.search(reg_procedure, s[i]).group(1).strip()
-                        scr.write('Test Procedure:\n%s\n\n' % procedure)
-
-                        reg_verify = r'Verify:([\w\s\-\.\#\*"\'\?\\:/>~\+,\|()]*)'
-                        verifystr = re.search(reg_verify, s[i])
-                        if verifystr:
-                            scr.write('Verify:\n%s\n' % verifystr.group(1).strip())
-                        else:
-                            scr.write('Verify:\n')
+                            reg_verify = r'Verify:([\w\s\-\.\#\*"\'\?\\:/>~\+,\|()&]*)'
+                            verifystr = re.search(reg_verify, s[i])
+                            if verifystr:
+                                try:
+                                    scr.write('Verify:\n%s\n' % verifystr.group(1).strip())
+                                except AttributeError, err:
+                                    print "Tid: %s: re.search() error in 'Verify':" % t[i] + str(err)
+                                    pass
+                            else:
+                                scr.write('Verify:\n')
                         
 
 
